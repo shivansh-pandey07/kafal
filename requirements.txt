@@ -1,0 +1,20 @@
+# Trip Score Deployment — Python dependencies
+# Python 3.10+ recommended
+
+# Kafka consumer (scoring_worker.py)
+kafka-python-ng
+
+# ClickHouse client (scoring_worker.py, recalibrate_bounds.py)
+clickhouse-connect==0.7.19
+
+# Data processing (trip_score package, recalibrate_bounds.py, backfill_full_history.py)
+pandas==2.2.2
+numpy==1.26.4
+
+# AWS S3 for frozen bounds upload/download (scoring_worker.py)
+boto3==1.34.131
+
+fastapi
+uvicorn[standard]
+
+requests
