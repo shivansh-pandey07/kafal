@@ -10,7 +10,7 @@ worker import from here, so the two paths cannot drift.
 
 # Logic version — bump this on any approved change to weights, bands,
 # thresholds, or aggregation. Stamped onto every scored row.
-LOGIC_VERSION = "1.1.0"
+LOGIC_VERSION = "1.2.0"
 
 # ── Short-trip buffer (Stage 1) ──────────────────────────────────────────────
 # Trips shorter than this get a +/- buffer on the join window so they capture
