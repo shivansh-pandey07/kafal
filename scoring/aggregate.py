@@ -42,17 +42,37 @@ def apply_physical_limits(values, col):
             and lo <= v <= hi]
 
 
-# ── Step 1B: MAD outlier cleaning ───────────────────────────────────────────
+# ── Step 1B: MAD outlier cleaning (movement-aware) ──────────────────────────
 def mad_clean(values):
+    """Remove isolated sensor glitches WITHOUT deleting real movement.
+
+    Previous version computed the median/MAD over the whole series. On a trip
+    that is idle for most of its duration (speed mostly 0) and then moves, the
+    median collapses toward the idle value and the MAD threshold becomes tiny,
+    so genuine acceleration (e.g. 6/8/11 km/h) was discarded as "outliers" —
+    turning a real trip into an apparent non-trip (max speed 1) and either
+    dropping it from scoring or scoring it on wrong data.
+
+    Fix: judge spread over the MOVING (non-zero) samples so an idle baseline
+    can't make real motion look like an outlier, and only trim values ABOVE a
+    generous one-sided upper fence (sensor glitches read high). Impossible
+    readings are already removed by apply_physical_limits upstream, so this
+    step only needs to catch in-range spikes, never real driving.
+    """
     if len(values) < 4:
         return values
     arr = np.array(values, dtype=float)
-    median = np.median(arr)
-    mad = np.median(np.abs(arr - median))
+    moving = arr[arr > 0]
+    # Not enough motion to characterise spread — keep everything and let the
+    # physical-limit filter be the guard. Never delete movement on thin data.
+    if len(moving) < 4:
+        return values
+    median = np.median(moving)
+    mad = np.median(np.abs(moving - median))
     if mad == 0:
         return values
-    threshold = 3 * 1.4826 * mad
-    return arr[np.abs(arr - median) <= threshold].tolist()
+    upper = median + 5 * 1.4826 * mad          # one-sided, generous fence
+    return arr[arr <= upper].tolist()
 
 
 # ── Step 2A: one-sided stats (speed, rpm) ───────────────────────────────────
